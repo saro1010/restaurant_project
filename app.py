@@ -144,7 +144,20 @@ class TableManager:
 
 
     def view_tables(self):
-        pass
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM tables ORDER BY table_number")
+        rows = cur.fetchall()
+        
+        if not rows:
+            print("No table found!")
+        else:            
+            for table_id, table_number, status in rows:
+                print(f"Table {table_number} (ID: {table_id}) - Status: {status}")
+
+        cur.close()
+        conn.close()
 
     def update_table_status(self):
         pass
