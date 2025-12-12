@@ -391,8 +391,33 @@ class OrderManager:
         conn.close()
 
     def view_active_orders(self):
-        pass
+        
+        conn = self.db.connect()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT o.id, t.table_number, o.order_time, o.status
+            FROM orders o
+            JOIN tables t ON t.id = o.table_id
+            WHERE o.status = %s
+            ORDER BY o.order_time DESC
+        """, ("open",))
 
+        rows = cur.fetchall()
+
+        if not rows:
+            print("No active orders.")
+            cur.close()
+            conn.close()
+            return
+
+        print("\n--- Active Orders ---")
+        for order_id, table_number, order_time, status in rows:
+            print(f"Order {order_id} | Table {table_number} | {order_time} | Status: {status}")
+
+        cur.close()
+        conn.close()
+        
     def calculate_daily_sales(self):
         pass
 
