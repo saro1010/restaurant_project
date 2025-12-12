@@ -1,27 +1,35 @@
-import psycopg2 
-from psycopg2 import sql 
+import psycopg2
 from psycopg2 import errors
 
+
 class Database:
+    """PostgreSQL connection helper."""
+
     def connect(self):
+        # Create and return a new DB connection
         return psycopg2.connect(
             dbname="restaurant_db",
             user="postgres",
-            password="YOUR_PASSWORD",
+            password="YOUR_PASSWORD",  # <-- put your real password here
             host="localhost",
             port="5432"
         )
 
 
 class MenuManager:
+    """CRUD operations for menu items."""
+
     def __init__(self, db):
+        # Keep a shared Database instance
         self.db = db
 
     def add_item(self):
+        # Read input
         name = input("Enter the name of item : ")
         price = float(input("Enter price: "))
         price = round(price, 2)
 
+        # Insert into DB
         conn = self.db.connect()
         cur = conn.cursor()
 
@@ -37,6 +45,7 @@ class MenuManager:
         print("item added successfully")
 
     def show_menu(self):
+        # Fetch all menu items
         conn = self.db.connect()
         cur = conn.cursor()
 
@@ -54,8 +63,9 @@ class MenuManager:
 
         cur.close()
         conn.close()
-    
+
     def update_item(self):
+        # Show items first
         self.show_menu()
         print()
 
@@ -69,6 +79,7 @@ class MenuManager:
         new_price = float(input("Enter new price for item : "))
         new_price = round(new_price, 2)
 
+        # Update in DB
         conn = self.db.connect()
         cur = conn.cursor()
 
@@ -87,8 +98,8 @@ class MenuManager:
         cur.close()
         conn.close()
 
-
     def delete_item(self):
+        # Show items first
         self.show_menu()
         print()
 
@@ -96,8 +107,9 @@ class MenuManager:
             item_id = int(input("Enter item ID to delete : "))
         except ValueError:
             print("Please enter a valid number.")
-            return 
+            return
 
+        # Delete from DB
         conn = self.db.connect()
         cur = conn.cursor()
 
@@ -109,13 +121,15 @@ class MenuManager:
         else:
             print("Item deleted successfully.")
 
-        cur.close()   
+        cur.close()
         conn.close()
 
 
 class TableManager:
+    """CRUD operations for restaurant tables."""
 
     def __init__(self, db):
+        # Keep a shared Database instance
         self.db = db
 
     def add_table(self):
@@ -129,12 +143,16 @@ class TableManager:
         cur = conn.cursor()
 
         try:
-            cur.execute("INSERT INTO tables (table_number) VALUES (%s)", (table_number,))
+            # Insert new table
+            cur.execute(
+                "INSERT INTO tables (table_number) VALUES (%s)",
+                (table_number,)
+            )
             conn.commit()
             print("Table added successfully.")
 
         except psycopg2.errors.UniqueViolation:
-            
+            # Duplicate table_number
             print("This table number already exists!")
             conn.rollback()
 
@@ -142,17 +160,17 @@ class TableManager:
             cur.close()
             conn.close()
 
-
     def view_tables(self):
-
+        # Fetch tables list
         conn = self.db.connect()
         cur = conn.cursor()
+
         cur.execute("SELECT * FROM tables ORDER BY table_number")
         rows = cur.fetchall()
-        
+
         if not rows:
             print("No table found!")
-        else:            
+        else:
             for table_id, table_number, status in rows:
                 print(f"Table {table_number} (ID: {table_id}) - Status: {status}")
 
@@ -160,6 +178,7 @@ class TableManager:
         conn.close()
 
     def update_table_status(self):
+        # Show tables first
         self.view_tables()
         print()
 
@@ -170,19 +189,20 @@ class TableManager:
             return
 
         new_status = input("Enter the new status (available, reserved, occupied): ").lower()
-
         valid_status = ["available", "reserved", "occupied"]
 
         if new_status not in valid_status:
             print("Invalid status!")
             return
 
+        # Update status
         conn = self.db.connect()
         cur = conn.cursor()
 
         cur.execute(
             "UPDATE tables SET status = %s WHERE id = %s",
-            (new_status, table_id))
+            (new_status, table_id)
+        )
 
         conn.commit()
 
@@ -195,6 +215,7 @@ class TableManager:
         conn.close()
 
     def delete_table(self):
+        # Show tables first
         self.view_tables()
         print()
 
@@ -202,12 +223,13 @@ class TableManager:
             table_id = int(input("Select the table ID to delete: "))
         except ValueError:
             print("Please enter a valid number.")
-            return      
+            return
 
         conn = self.db.connect()
-        cur = conn.cursor() 
+        cur = conn.cursor()
 
-        cur.execute('SELECT status FROM tables WHERE id = %s', (table_id,))
+        # Check status before delete
+        cur.execute("SELECT status FROM tables WHERE id = %s", (table_id,))
         row = cur.fetchone()
 
         if row is None:
@@ -224,7 +246,8 @@ class TableManager:
             conn.close()
             return
 
-        cur.execute('DELETE FROM tables WHERE id = %s', (table_id,))
+        # Delete table
+        cur.execute("DELETE FROM tables WHERE id = %s", (table_id,))
         conn.commit()
 
         if cur.rowcount == 0:
@@ -235,18 +258,23 @@ class TableManager:
         cur.close()
         conn.close()
 
+
 class OrderManager:
+    """Create/modify orders and compute sales."""
+
     def __init__(self, db):
+        # Keep a shared Database instance
         self.db = db
 
     def create_order(self):
-
+        # List available tables
         print("\n---- available tables ----\n")
         conn = self.db.connect()
-        cur = conn.cursor() 
+        cur = conn.cursor()
 
-        cur.execute("SELECT id FROM tables WHERE status = %s", ('available',))
+        cur.execute("SELECT id FROM tables WHERE status = %s", ("available",))
         rows = cur.fetchall()
+
         if not rows:
             print("No available tables!")
             cur.close()
@@ -271,24 +299,28 @@ class OrderManager:
             cur.close()
             conn.close()
             return
-        
-        cur.execute(
-        "INSERT INTO orders (table_id, status) VALUES (%s, %s) RETURNING id",
-        (table_id, "open"))
 
+        # Create order and get new id
+        cur.execute(
+            "INSERT INTO orders (table_id, status) VALUES (%s, %s) RETURNING id",
+            (table_id, "open")
+        )
         order_id = cur.fetchone()[0]
 
-        cur.execute("UPDATE tables SET status = %s WHERE id = %s", ("occupied", table_id))
-        conn.commit()
+        # Mark table occupied
+        cur.execute(
+            "UPDATE tables SET status = %s WHERE id = %s",
+            ("occupied", table_id)
+        )
 
+        conn.commit()
         print(f"Order created successfully! Order ID: {order_id}")
 
         cur.close()
         conn.close()
 
-
     def add_item_to_order(self):
-
+        # Read input
         try:
             item_id = int(input("Enter the item id please : "))
             order_id = int(input("Enter the order id please : "))
@@ -296,7 +328,7 @@ class OrderManager:
         except ValueError:
             print("Please enter a valid number.")
             return
-        
+
         if quantity <= 0:
             print("Quantity must be greater than 0.")
             return
@@ -304,14 +336,15 @@ class OrderManager:
         conn = self.db.connect()
         cur = conn.cursor()
 
+        # Validate menu item
         cur.execute("SELECT 1 FROM menu_items WHERE id = %s", (item_id,))
-
         if cur.fetchone() is None:
             print(f"item id {item_id} does not exist!")
             cur.close()
             conn.close()
             return
-        
+
+        # Validate order status
         cur.execute("SELECT status FROM orders WHERE id = %s", (order_id,))
         order_status_row = cur.fetchone()
 
@@ -322,13 +355,13 @@ class OrderManager:
             return
 
         status = order_status_row[0]
-
         if status != "open":
             print("This order is not open. You can't add items to it.")
             cur.close()
             conn.close()
             return
 
+        # Insert order detail
         cur.execute(
             "INSERT INTO order_details(order_id, item_id, quantity) VALUES (%s, %s, %s)",
             (order_id, item_id, quantity)
@@ -340,8 +373,8 @@ class OrderManager:
         cur.close()
         conn.close()
 
-
     def view_order_details(self):
+        # Read input
         try:
             order_id = int(input("Enter order ID: "))
         except ValueError:
@@ -351,7 +384,11 @@ class OrderManager:
         conn = self.db.connect()
         cur = conn.cursor()
 
-        cur.execute("SELECT status, table_id, order_time FROM orders WHERE id = %s", (order_id,))
+        # Fetch order header info
+        cur.execute(
+            "SELECT status, table_id, order_time FROM orders WHERE id = %s",
+            (order_id,)
+        )
         order_row = cur.fetchone()
 
         if order_row is None:
@@ -359,12 +396,14 @@ class OrderManager:
             cur.close()
             conn.close()
             return
-        
+
+        # Fetch order lines
         cur.execute("""
-        SELECT mi.name, mi.price, od.quantity, (mi.price * od.quantity) AS line_total
-        FROM order_details od
-        JOIN menu_items mi ON mi.id = od.item_id
-        WHERE od.order_id = %s """, (order_id,))
+            SELECT mi.name, mi.price, od.quantity, (mi.price * od.quantity) AS line_total
+            FROM order_details od
+            JOIN menu_items mi ON mi.id = od.item_id
+            WHERE od.order_id = %s
+        """, (order_id,))
         rows = cur.fetchall()
 
         if not rows:
@@ -375,7 +414,6 @@ class OrderManager:
 
         status, table_id, order_time = order_row
         print(f"Order {order_id} | Table ID: {table_id} | Status: {status} | Time: {order_time}")
-
 
         total = 0
         print("\n--- Order Details ---")
@@ -391,10 +429,10 @@ class OrderManager:
         conn.close()
 
     def view_active_orders(self):
-        
+        # Fetch active orders
         conn = self.db.connect()
         cur = conn.cursor()
-        
+
         cur.execute("""
             SELECT o.id, t.table_number, o.order_time, o.status
             FROM orders o
@@ -419,6 +457,7 @@ class OrderManager:
         conn.close()
 
     def close_order(self):
+        # Read input
         try:
             order_id = int(input("Enter order ID You want to Be closed From the above list : "))
         except ValueError:
@@ -428,6 +467,7 @@ class OrderManager:
         conn = self.db.connect()
         cur = conn.cursor()
 
+        # Get current status and table_id
         cur.execute("SELECT status, table_id FROM orders WHERE id = %s", (order_id,))
         row = cur.fetchone()
 
@@ -445,6 +485,7 @@ class OrderManager:
             conn.close()
             return
 
+        # Close order + free table
         cur.execute("UPDATE orders SET status = %s WHERE id = %s", ("closed", order_id))
         cur.execute("UPDATE tables SET status = %s WHERE id = %s", ("available", table_id))
 
@@ -453,9 +494,9 @@ class OrderManager:
 
         cur.close()
         conn.close()
-       
 
     def calculate_daily_sales(self):
+        # Compute today's sales for closed orders
         conn = self.db.connect()
         cur = conn.cursor()
 
@@ -466,11 +507,11 @@ class OrderManager:
             JOIN menu_items mi ON mi.id = od.item_id
             WHERE o.status = %s
             AND o.order_time::date = CURRENT_DATE
-        """, ('closed',))
-            
+        """, ("closed",))
+
         row = cur.fetchone()
         total = float(row[0])
-            
+
         print(f"Total sales today: ${total:.2f}")
 
         cur.close()
@@ -478,13 +519,17 @@ class OrderManager:
 
 
 class RestaurantApp:
+    """CLI application menus and routing."""
+
     def __init__(self):
+        # App dependencies
         self.db = Database()
         self.menu_manager = MenuManager(self.db)
         self.table_manager = TableManager(self.db)
         self.order_manager = OrderManager(self.db)
 
     def main_menu(self):
+        # Main loop
         while True:
             print("\n----- Restaurant Manager -----")
             print("1. Menu Management")
@@ -495,21 +540,18 @@ class RestaurantApp:
 
             if choice == "1":
                 self.menu_management_menu()
-
             elif choice == "2":
                 self.table_management_menu()
-
             elif choice == "3":
                 self.order_management_menu()
-
             elif choice == "4":
                 print("Goodbye!")
                 break
             else:
                 print("Invalid choice. Try again.")
 
-
     def menu_management_menu(self):
+        # Menu management loop
         while True:
             print("\n--- Menu Management ---")
             print("1. Add Item")
@@ -521,22 +563,19 @@ class RestaurantApp:
 
             if choice == "1":
                 self.menu_manager.add_item()
-
             elif choice == "2":
                 self.menu_manager.show_menu()
-
             elif choice == "3":
                 self.menu_manager.update_item()
-
             elif choice == "4":
                 self.menu_manager.delete_item()
-
             elif choice == "5":
                 break
             else:
                 print("Invalid choice. Try again.")
 
     def table_management_menu(self):
+        # Table management loop
         while True:
             print("\n--- Table Management ---")
             print("1. Add Table")
@@ -548,22 +587,19 @@ class RestaurantApp:
 
             if choice == "1":
                 self.table_manager.add_table()
-
             elif choice == "2":
                 self.table_manager.view_tables()
-
             elif choice == "3":
                 self.table_manager.update_table_status()
-
             elif choice == "4":
                 self.table_manager.delete_table()
-
             elif choice == "5":
                 break
             else:
                 print("Invalid choice. Try again.")
 
     def order_management_menu(self):
+        # Order management loop
         while True:
             print("\n--- Order Management ---")
             print("1. Create Order")
@@ -579,9 +615,9 @@ class RestaurantApp:
                 self.order_manager.create_order()
 
             elif choice == "2":
+                # Show menu before adding
                 self.menu_manager.show_menu()
                 print()
-
                 self.order_manager.add_item_to_order()
 
             elif choice == "3":
@@ -591,9 +627,9 @@ class RestaurantApp:
                 self.order_manager.view_active_orders()
 
             elif choice == "5":
+                # Show open orders before closing
                 self.order_manager.view_active_orders()
                 print()
-
                 self.order_manager.close_order()
 
             elif choice == "6":
