@@ -206,7 +206,7 @@ class TableManager:
 
         conn = self.db.connect()
         cur = conn.cursor() 
-        
+
         cur.execute('SELECT status FROM tables WHERE id = %s', (table_id,))
         row = cur.fetchone()
 
@@ -240,7 +240,53 @@ class OrderManager:
         self.db = db
 
     def create_order(self):
-        pass
+
+        print("\n---- available tables ----\n")
+        conn = self.db.connect()
+        cur = conn.cursor() 
+
+        cur.execute("SELECT id FROM tables WHERE status = %s", ('available',))
+        rows = cur.fetchall()
+        
+        if not rows:
+            print("No available tables!")
+            cur.close()
+            conn.close()
+            return
+
+        for (t_id,) in rows:
+            print(f"Table ID: {t_id}")
+
+        try:
+            table_id = int(input("Enter table ID for order: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            cur.close()
+            conn.close()
+            return
+
+        available_ids = [t[0] for t in rows]
+
+        if table_id not in available_ids:
+            print("Table is occupied or does not exist!")
+            cur.close()
+            conn.close()
+            return
+        
+        cur.execute(
+        "INSERT INTO orders (table_id, status) VALUES (%s, %s) RETURNING id",
+        (table_id, "open"))
+
+        order_id = cur.fetchone()[0]
+
+        cur.execute("UPDATE tables SET status = %s WHERE id = %s", ("occupied", table_id))
+        conn.commit()
+
+        print(f"Order created successfully! Order ID: {order_id}")
+
+        cur.close()
+        conn.close()
+
 
     def add_item_to_order(self):
         pass
