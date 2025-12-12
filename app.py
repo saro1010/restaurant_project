@@ -456,7 +456,25 @@ class OrderManager:
        
 
     def calculate_daily_sales(self):
-        pass
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT COALESCE(SUM(mi.price * od.quantity), 0)
+            FROM orders o
+            JOIN order_details od ON od.order_id = o.id
+            JOIN menu_items mi ON mi.id = od.item_id
+            WHERE o.status = %s
+            AND o.order_time::date = CURRENT_DATE
+        """, ('closed',))
+            
+        row = cur.fetchone()
+        total = float(row[0])
+            
+        print(f"Total sales today: ${total:.2f}")
+
+        cur.close()
+        conn.close()
 
 
 class RestaurantApp:
