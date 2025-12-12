@@ -1,16 +1,15 @@
 import psycopg2
-from psycopg2 import sql
 
 
 class Database:
-    def __init__(self):
-        self.dbname = "restaurant_db"
-        self.user = "postgres"
-        self.password = "YOUR_PASSWORD"
-        self.host = "localhost"
-
     def connect(self):
-        pass  
+        return psycopg2.connect(
+            dbname="restaurant_db",
+            user="postgres",
+            password="YOUR_PASSWORD",
+            host="localhost",
+            port="5432"
+        )
 
 
 class MenuManager:
@@ -18,7 +17,23 @@ class MenuManager:
         self.db = db
 
     def add_item(self):
-        pass
+        name = input("Enter the name of item : ")
+        price = float(input("Enter price: "))
+        price = round(price, 2)
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute(
+            "INSERT INTO menu_items(name, price) VALUES (%s, %s)",
+            (name, price)
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print("item added successfully")
 
     def show_menu(self):
         pass
@@ -45,7 +60,27 @@ class TableManager:
 
     def delete_table(self):
         pass
-    
+
+
+class OrderManager:
+    def __init__(self, db):
+        self.db = db
+
+    def create_order(self):
+        pass
+
+    def add_item_to_order(self):
+        pass
+
+    def view_order_details(self):
+        pass
+
+    def view_active_orders(self):
+        pass
+
+    def calculate_daily_sales(self):
+        pass
+
 
 class RestaurantApp:
     def __init__(self):
@@ -63,7 +98,18 @@ class RestaurantApp:
             print("4. Exit")
             choice = input("Choose an option: ")
 
-            pass  
+            pass
 
-app = RestaurantApp()
-app.main_menu()
+    def menu_management_menu(self):
+        pass
+
+    def table_management_menu(self):
+        pass
+
+    def order_management_menu(self):
+        pass
+
+
+if __name__ == "__main__":
+    app = RestaurantApp()
+    app.main_menu()
