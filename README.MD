@@ -40,7 +40,79 @@ restaurant_project/
 ├── .gitignore # Ignore venv and other unnecessary files
 └── venv/ # Virtual environment (ignored)
 ```
+----
 
+## 🚀 How to Run the Project
+
+
+
+##### 1. First, create a PostgreSQL database (for example: restaurant_db) and run the provided SQL script to create the tables:
+
+```
+CREATE TABLE menu_items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    price DECIMAL NOT NULL
+);
+
+CREATE TABLE tables (
+    id SERIAL PRIMARY KEY,
+    table_number INTEGER UNIQUE NOT NULL,
+    status VARCHAR NOT NULL DEFAULT 'available'
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    table_id INTEGER REFERENCES tables(id),
+    order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR NOT NULL
+);
+
+CREATE TABLE order_details (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    item_id INTEGER REFERENCES menu_items(id),
+    quantity INTEGER NOT NULL
+);
+
+```
+----
+
+#### 2. Configure database connection
+
+
+```
+psycopg2.connect(
+    dbname="restaurant_db",
+    user="postgres",
+    password="YOUR_PASSWORD",
+    host="localhost"
+)
+```
+----
+
+##### Replace YOUR_PASSWORD with your PostgreSQL password.
+
+
+#### 3. Install required dependencies
+
+```
+pip install psycopg2
+```
+---
+
+#### 4.Use the menu-driven interface<
+
+##### **The program will start with a text-based menu where you can:**
+
++ **Manage menu items**
+
++ **Manage tables**
+
++ **Create and manage orders**
+
++ **View daily sales reports**
+---
 ## 🛠️ Technologies Used
 
 - **Python 3.x**
