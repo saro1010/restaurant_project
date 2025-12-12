@@ -54,10 +54,38 @@ class MenuManager:
         cur.close()
         conn.close()
     
-
-
     def update_item(self):
-        pass
+        self.show_menu()
+        print()
+
+        try:
+            item_id = int(input("Enter item ID to update: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        new_name = input("Enter new name for item: ")
+        new_price = float(input("Enter new price for item: "))
+        new_price = round(new_price, 2)
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute(
+            "UPDATE menu_items SET name = %s, price = %s WHERE item_id = %s",
+            (new_name, new_price, item_id)
+        )
+
+        conn.commit()
+
+        if cur.rowcount == 0:
+            print("No item found with that ID.")
+        else:
+            print("Item updated successfully.")
+
+        cur.close()
+        conn.close()
+
 
     def delete_item(self):
         pass
