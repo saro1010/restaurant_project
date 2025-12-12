@@ -160,11 +160,42 @@ class TableManager:
         conn.close()
 
     def update_table_status(self):
-        pass
+        self.view_tables()
+        print()
+
+        try:
+            table_id = int(input("Select the table ID to update: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        new_status = input("Enter the new status (available, reserved, occupied): ").lower()
+
+        valid_status = ["available", "reserved", "occupied"]
+
+        if new_status not in valid_status:
+            print("Invalid status!")
+            return
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute(
+            "UPDATE tables SET status = %s WHERE id = %s",
+            (new_status, table_id))
+
+        conn.commit()
+
+        if cur.rowcount == 0:
+            print("No table found with that ID.")
+        else:
+            print("Table status updated successfully.")
+
+        cur.close()
+        conn.close()
 
     def delete_table(self):
         pass
-
 
 class OrderManager:
     def __init__(self, db):
