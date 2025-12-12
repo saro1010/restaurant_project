@@ -59,13 +59,13 @@ class MenuManager:
         print()
 
         try:
-            item_id = int(input("Enter item ID to update: "))
+            item_id = int(input("Enter item ID to update : "))
         except ValueError:
             print("Please enter a valid number.")
             return
 
-        new_name = input("Enter new name for item: ")
-        new_price = float(input("Enter new price for item: "))
+        new_name = input("Enter new name for item : ")
+        new_price = float(input("Enter new price for item : "))
         new_price = round(new_price, 2)
 
         conn = self.db.connect()
@@ -88,7 +88,28 @@ class MenuManager:
 
 
     def delete_item(self):
-        pass
+        self.show_menu()
+        print()
+
+        try:
+            item_id = int(input("Enter item ID to delete : "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return 
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("DELETE FROM menu_items WHERE item_id = %s", (item_id,))
+        conn.commit()
+
+        if cur.rowcount == 0:
+            print("No item found with that ID.")
+        else:
+            print("Item deleted successfully.")
+
+        cur.close()   
+        conn.close()
 
 
 class TableManager:
