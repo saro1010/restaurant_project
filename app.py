@@ -247,7 +247,6 @@ class OrderManager:
 
         cur.execute("SELECT id FROM tables WHERE status = %s", ('available',))
         rows = cur.fetchall()
-        
         if not rows:
             print("No available tables!")
             cur.close()
@@ -289,7 +288,58 @@ class OrderManager:
 
 
     def add_item_to_order(self):
-        pass
+
+        try:
+            item_id = int(input("Enter the item id please : "))
+            order_id = int(input("Enter the order id please : "))
+            quantity = int(input("Enter quantity please : "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+        
+        if quantity <= 0:
+            print("Quantity must be greater than 0.")
+            return
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("SELECT 1 FROM menu_items WHERE id = %s", (item_id,))
+
+        if cur.fetchone() is None:
+            print(f"item id {item_id} does not exist!")
+            cur.close()
+            conn.close()
+            return
+        
+        cur.execute("SELECT status FROM orders WHERE id = %s", (order_id,))
+        order_status_row = cur.fetchone()
+
+        if order_status_row is None:
+            print(f"order id {order_id} does not exist!")
+            cur.close()
+            conn.close()
+            return
+
+        status = order_status_row[0]
+
+        if status != "open":
+            print("This order is not open. You can't add items to it.")
+            cur.close()
+            conn.close()
+            return
+
+        cur.execute(
+            "INSERT INTO order_details(order_id, item_id, quantity) VALUES (%s, %s, %s)",
+            (order_id, item_id, quantity)
+        )
+
+        conn.commit()
+        print("item added to order successfully.")
+
+        cur.close()
+        conn.close()
+
 
     def view_order_details(self):
         pass
