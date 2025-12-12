@@ -417,7 +417,44 @@ class OrderManager:
 
         cur.close()
         conn.close()
-        
+
+    def close_order(self):
+        try:
+            order_id = int(input("Enter order ID: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("SELECT status, table_id FROM orders WHERE id = %s", (order_id,))
+        row = cur.fetchone()
+
+        if row is None:
+            print("Order not found.")
+            cur.close()
+            conn.close()
+            return
+
+        status, table_id = row
+
+        if status != "open":
+            print("Order is not open.")
+            cur.close()
+            conn.close()
+            return
+
+        cur.execute("UPDATE orders SET status = %s WHERE id = %s", ("closed", order_id))
+        cur.execute("UPDATE tables SET status = %s WHERE id = %s", ("available", table_id))
+
+        conn.commit()
+        print("Order closed successfully and table is now available.")
+
+        cur.close()
+        conn.close()
+       
+
     def calculate_daily_sales(self):
         pass
 
