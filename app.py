@@ -1,5 +1,6 @@
-import psycopg2
-
+import psycopg2 
+from psycopg2 import sql 
+from psycopg2 import errors
 
 class Database:
     def connect(self):
@@ -113,11 +114,34 @@ class MenuManager:
 
 
 class TableManager:
+
     def __init__(self, db):
         self.db = db
 
     def add_table(self):
-        pass
+        try:
+            table_number = int(input("Please enter the table number: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("INSERT INTO tables (table_number) VALUES (%s)", (table_number,))
+            conn.commit()
+            print("Table added successfully.")
+
+        except psycopg2.errors.UniqueViolation:
+            
+            print("This table number already exists!")
+            conn.rollback()
+
+        finally:
+            cur.close()
+            conn.close()
+
 
     def view_tables(self):
         pass
