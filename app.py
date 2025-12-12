@@ -7,7 +7,7 @@ class Database:
         return psycopg2.connect(
             dbname="restaurant_db",
             user="postgres",
-            password="YOUR_PASSWORD",
+            password="saRO7577",
             host="localhost",
             port="5432"
         )
@@ -206,6 +206,24 @@ class TableManager:
 
         conn = self.db.connect()
         cur = conn.cursor() 
+        
+        cur.execute('SELECT status FROM tables WHERE id = %s', (table_id,))
+        row = cur.fetchone()
+
+        if row is None:
+            print("No table found with that ID.")
+            cur.close()
+            conn.close()
+            return
+
+        status = row[0]
+
+        if status == "occupied":
+            print("Table status is occupied! You can't delete occupied tables.")
+            cur.close()
+            conn.close()
+            return
+
         cur.execute('DELETE FROM tables WHERE id = %s', (table_id,))
         conn.commit()
 
