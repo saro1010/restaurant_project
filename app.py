@@ -40,7 +40,7 @@ class MenuManager:
         conn = self.db.connect()
         cur = conn.cursor()
 
-        cur.execute("SELECT item_id, name, price FROM menu_items ORDER BY item_id")
+        cur.execute("SELECT id, name, price FROM menu_items ORDER BY id")
         rows = cur.fetchall()
 
         if not rows:
@@ -73,7 +73,7 @@ class MenuManager:
         cur = conn.cursor()
 
         cur.execute(
-            "UPDATE menu_items SET name = %s, price = %s WHERE item_id = %s",
+            "UPDATE menu_items SET name = %s, price = %s WHERE id = %s",
             (new_name, new_price, item_id)
         )
 
@@ -420,7 +420,7 @@ class OrderManager:
 
     def close_order(self):
         try:
-            order_id = int(input("Enter order ID: "))
+            order_id = int(input("Enter order ID You want to Be closed From the above list : "))
         except ValueError:
             print("Please enter a valid number.")
             return
@@ -493,16 +493,116 @@ class RestaurantApp:
             print("4. Exit")
             choice = input("Choose an option: ")
 
-            pass
+            if choice == "1":
+                self.menu_management_menu()
+
+            elif choice == "2":
+                self.table_management_menu()
+
+            elif choice == "3":
+                self.order_management_menu()
+
+            elif choice == "4":
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid choice. Try again.")
+
 
     def menu_management_menu(self):
-        pass
+        while True:
+            print("\n--- Menu Management ---")
+            print("1. Add Item")
+            print("2. Show Menu")
+            print("3. Update Item")
+            print("4. Delete Item")
+            print("5. Back")
+            choice = input("Choose an option: ")
+
+            if choice == "1":
+                self.menu_manager.add_item()
+
+            elif choice == "2":
+                self.menu_manager.show_menu()
+
+            elif choice == "3":
+                self.menu_manager.update_item()
+
+            elif choice == "4":
+                self.menu_manager.delete_item()
+
+            elif choice == "5":
+                break
+            else:
+                print("Invalid choice. Try again.")
 
     def table_management_menu(self):
-        pass
+        while True:
+            print("\n--- Table Management ---")
+            print("1. Add Table")
+            print("2. View Tables")
+            print("3. Update Table Status")
+            print("4. Delete Table")
+            print("5. Back")
+            choice = input("Choose an option: ")
+
+            if choice == "1":
+                self.table_manager.add_table()
+
+            elif choice == "2":
+                self.table_manager.view_tables()
+
+            elif choice == "3":
+                self.table_manager.update_table_status()
+
+            elif choice == "4":
+                self.table_manager.delete_table()
+
+            elif choice == "5":
+                break
+            else:
+                print("Invalid choice. Try again.")
 
     def order_management_menu(self):
-        pass
+        while True:
+            print("\n--- Order Management ---")
+            print("1. Create Order")
+            print("2. Add Item to Order")
+            print("3. View Order Details")
+            print("4. View Active Orders")
+            print("5. Close Order")
+            print("6. Calculate Daily Sales")
+            print("7. Back")
+            choice = input("Choose an option: ")
+
+            if choice == "1":
+                self.order_manager.create_order()
+
+            elif choice == "2":
+                self.menu_manager.show_menu()
+                print()
+
+                self.order_manager.add_item_to_order()
+
+            elif choice == "3":
+                self.order_manager.view_order_details()
+
+            elif choice == "4":
+                self.order_manager.view_active_orders()
+
+            elif choice == "5":
+                self.order_manager.view_active_orders()
+                print()
+
+                self.order_manager.close_order()
+
+            elif choice == "6":
+                self.order_manager.calculate_daily_sales()
+
+            elif choice == "7":
+                break
+            else:
+                print("Invalid choice. Try again.")
 
 
 if __name__ == "__main__":
