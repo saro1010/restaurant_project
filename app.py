@@ -36,7 +36,25 @@ class MenuManager:
         print("item added successfully")
 
     def show_menu(self):
-        pass
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("SELECT item_id, name, price FROM menu_items ORDER BY item_id")
+        rows = cur.fetchall()
+
+        if not rows:
+            print("menu is empty!")
+            cur.close()
+            conn.close()
+            return
+
+        for item_id, name, price in rows:
+            print(f"{item_id}. {name} - ${price:.2f}")
+
+        cur.close()
+        conn.close()
+    
+
 
     def update_item(self):
         pass
