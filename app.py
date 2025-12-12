@@ -7,7 +7,7 @@ class Database:
         return psycopg2.connect(
             dbname="restaurant_db",
             user="postgres",
-            password="saRO7577",
+            password="YOUR_PASSWORD",
             host="localhost",
             port="5432"
         )
