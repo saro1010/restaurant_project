@@ -101,7 +101,7 @@ class MenuManager:
         conn = self.db.connect()
         cur = conn.cursor()
 
-        cur.execute("DELETE FROM menu_items WHERE item_id = %s", (item_id,))
+        cur.execute("DELETE FROM menu_items WHERE id = %s", (item_id,))
         conn.commit()
 
         if cur.rowcount == 0:
@@ -195,7 +195,27 @@ class TableManager:
         conn.close()
 
     def delete_table(self):
-        pass
+        self.view_tables()
+        print()
+
+        try:
+            table_id = int(input("Select the table ID to delete: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return      
+
+        conn = self.db.connect()
+        cur = conn.cursor() 
+        cur.execute('DELETE FROM tables WHERE id = %s', (table_id,))
+        conn.commit()
+
+        if cur.rowcount == 0:
+            print("No table found with that ID.")
+        else:
+            print("Table deleted successfully.")
+
+        cur.close()
+        conn.close()
 
 class OrderManager:
     def __init__(self, db):
