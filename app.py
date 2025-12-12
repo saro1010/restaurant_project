@@ -342,7 +342,53 @@ class OrderManager:
 
 
     def view_order_details(self):
-        pass
+        try:
+            order_id = int(input("Enter order ID: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        conn = self.db.connect()
+        cur = conn.cursor()
+
+        cur.execute("SELECT status, table_id, order_time FROM orders WHERE id = %s", (order_id,))
+        order_row = cur.fetchone()
+
+        if order_row is None:
+            print("Order not found.")
+            cur.close()
+            conn.close()
+            return
+        
+        cur.execute("""
+        SELECT mi.name, mi.price, od.quantity, (mi.price * od.quantity) AS line_total
+        FROM order_details od
+        JOIN menu_items mi ON mi.id = od.item_id
+        WHERE od.order_id = %s """, (order_id,))
+        rows = cur.fetchall()
+
+        if not rows:
+            print("This order has no items.")
+            cur.close()
+            conn.close()
+            return
+
+        status, table_id, order_time = order_row
+        print(f"Order {order_id} | Table ID: {table_id} | Status: {status} | Time: {order_time}")
+
+
+        total = 0
+        print("\n--- Order Details ---")
+        for name, price, quantity, line_total in rows:
+            price = float(price)
+            line_total = float(line_total)
+            print(f"{name} | ${price:.2f} | qty: {quantity} | line total: ${line_total:.2f}")
+            total += line_total
+
+        print(f"\nTotal: ${total:.2f}")
+
+        cur.close()
+        conn.close()
 
     def view_active_orders(self):
         pass
